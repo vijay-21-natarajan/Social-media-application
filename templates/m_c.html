@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integrated Chat UI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #fafafa;
+        }
+
+        .chat-container {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 30%;
+            max-width: 400px;
+            background-color: #ffffff;
+            border-right: 1px solid #e6e6e6;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar h2 {
+            margin: 0;
+            padding: 15px;
+            font-size: 22px;
+            font-weight: bold;
+            color: #262626;
+            text-align: center;
+            border-bottom: 1px solid #e6e6e6;
+        }
+
+        .chat-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .chat-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .chat-item:hover {
+            background-color: #f7f7f7;
+        }
+
+        .chat-item img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 15px;
+            border: 1px solid #ddd;
+        }
+
+        .chat-item .chat-name {
+            font-size: 16px;
+            font-weight: 500;
+            color: #262626;
+        }
+
+        /* Chat Main Section */
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #fff;
+        }
+
+        .chat-header {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background-color: #f0f0f0;
+            border-bottom: 1px solid #e6e6e6;
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .chat-body {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .message {
+            display: flex;
+            align-items: center;
+        }
+
+        .message.sent {
+            justify-content: flex-end;
+        }
+
+        .message .message-content {
+            max-width: 60%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .message.sent .message-content {
+            background-color: #d4f8e8;
+            color: #000;
+        }
+
+        .message.received .message-content {
+            background-color: #f1f0f0;
+            color: #000;
+            box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Chat Footer */
+        .chat-footer {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-top: 1px solid #e6e6e6;
+        }
+
+        .chat-footer input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 30px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .chat-footer input:focus {
+            border-color: #888;
+        }
+
+        .chat-footer button {
+            margin-left: 10px;
+            padding: 10px 15px;
+            background-color: #0095f6;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .chat-footer button:hover {
+            background-color: #007dc5;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="chat-container">
+        <div class="chat-main">
+            <div class="chat-header">Chat Interface</div>
+            <div class="chat-body" id="chatBody">
+                <!-- Dynamic Messages -->
+            </div>
+            <div class="chat-footer">
+                <input type="text" id="messageInput" placeholder="Type a message" required>
+                <button id="sendButton">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const state = {
+            messages: []
+        };
+
+        const chatBody = document.getElementById('chatBody');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+
+        function renderMessages() {
+            chatBody.innerHTML = '';
+            state.messages.forEach((msg, index) => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${msg.type}`;
+
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+                contentDiv.textContent = msg.text;
+
+                messageDiv.appendChild(contentDiv);
+                chatBody.appendChild(messageDiv);
+            });
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        function addMessage(text, type) {
+            state.messages.push({ text, type });
+            renderMessages();
+        }
+
+        sendButton.addEventListener('click', () => {
+            const text = messageInput.value.trim();
+            if (text) {
+                addMessage(text, 'sent');
+                messageInput.value = '';
+
+                // Simulate a reply
+                setTimeout(() => {
+                    addMessage('Reply to: ' + text, 'received');
+                }, 1000);
+            }
+        });
+
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendButton.click();
+            }
+        });
+    </script>
+</body>
+
+</html>

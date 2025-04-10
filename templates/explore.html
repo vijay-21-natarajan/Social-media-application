@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explore</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: #fafafa;
+            margin: 0;
+            padding: 0;
+        }
+
+        .search-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #ffffff;
+            border-bottom: 1px solid #dbdbdb;
+        }
+
+        .search-bar {
+            width: 90%;
+            max-width: 600px;
+            padding: 12px 15px;
+            border-radius: 25px;
+            border: 1px solid #dbdbdb;
+            font-size: 16px;
+            outline: none;
+            background-color: #f7f7f7;
+            transition: border-color 0.2s ease;
+        }
+
+        .search-bar:focus {
+            border-color: #3897f0;
+        }
+
+        .results {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .user-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            background: #ffffff;
+            border: 1px solid #dbdbdb;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .user-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #e0e0e0;
+            margin-bottom: 10px;
+        }
+
+        .user-info {
+            text-align: center;
+        }
+
+        .user-info span {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 5px;
+            color: #262626;
+        }
+
+        .user-info span:first-child {
+            font-weight: 600;
+            color: #3897f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="search-container">
+        <input
+            type="text"
+            class="search-bar"
+            placeholder="Search for users..."
+            id="search-input"
+            oninput="fetchUsers()"
+        />
+    </div>
+
+    <div class="results" id="results-container"></div>
+
+    <script>
+        async function fetchUsers() {
+            const query = document.getElementById('search-input').value;
+            if (query.length === 0) {
+                document.getElementById('results-container').innerHTML = '';
+                return;
+            }
+            try {
+                const response = await axios.get(`/api/search-users?query=${query}`);
+                const users = response.data;
+                const resultsContainer = document.getElementById('results-container');
+                resultsContainer.innerHTML = '';
+                users.forEach(user => {
+                    const userCard = document.createElement('div');
+                    userCard.classList.add('user-card');
+                    userCard.innerHTML = `
+                        <div class="user-avatar"></div>
+                        <div class="user-info">
+                            <span>@${user.username || 'Unknown'}</span>
+                            <span>${user.email || 'No Email'}</span>
+                        </div>
+                    `;
+                    resultsContainer.appendChild(userCard);
+                });
+            } catch (error) {
+                console.error('Error fetching users:', error);
+            }
+        }
+    </script>
+</body>
+</html>

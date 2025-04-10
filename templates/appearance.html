@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appearance Settings</title>
+    <style>
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: #fafafa;
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 50px auto;
+            background: #fff;
+            padding: 20px;
+            border: 1px solid #dbdbdb;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease;
+        }
+
+        h1 {
+            font-size: 20px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #94c01c;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #94c01c;
+            margin-bottom: 8px;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #dbdbdb;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            background-color: #fff;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        select:focus {
+            border-color: #3897f0;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            background-color: #3897f0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        button:hover {
+            background-color: #287bc1;
+        }
+
+        .success-message {
+            font-size: 14px;
+            color: #28a745;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .error-message {
+            font-size: 14px;
+            color: #dc3545;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        body.dark-mode {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+
+        .container.dark-mode {
+            background-color: #1e1e1e;
+            border-color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Appearance Settings</h1>
+        <form id="appearanceForm">
+            <label for="theme">Theme</label>
+            <select id="theme" name="theme">
+                <option value="light" {{ 'selected' if user.theme == 'light' }}>Light</option>
+                <option value="dark" {{ 'selected' if user.theme == 'dark' }}>Dark</option>
+            </select>
+
+            <button type="submit">Save Changes</button>
+        </form>
+        <div id="message" class="success-message"></div>
+    </div>
+
+    <script>
+        document.getElementById("appearanceForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            const messageDiv = document.getElementById("message");
+            messageDiv.textContent = "";
+
+            const theme = document.getElementById("theme").value;
+
+            fetch("/settings/appearance", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ theme }),
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    if (data.message) {
+                        messageDiv.textContent = data.message;
+                        messageDiv.className = "success-message";
+
+                        // Update theme dynamically
+                        if (theme === "dark") {
+                            document.body.classList.add("dark-mode");
+                            document.querySelector(".container").classList.add("dark-mode");
+                        } else {
+                            document.body.classList.remove("dark-mode");
+                            document.querySelector(".container").classList.remove("dark-mode");
+                        }
+                    } else if (data.error) {
+                        messageDiv.textContent = data.error;
+                        messageDiv.className = "error-message";
+                    }
+                })
+                .catch((error) => {
+                    messageDiv.textContent = "An error occurred. Please try again.";
+                    messageDiv.className = "error-message";
+                    console.error("Error:", error);
+                });
+        });
+
+        // Initialize theme on page load
+        document.addEventListener("DOMContentLoaded", () => {
+            const currentTheme = document.getElementById("theme").value;
+            if (currentTheme === "dark") {
+                document.body.classList.add("dark-mode");
+                document.querySelector(".container").classList.add("dark-mode");
+            }
+        });
+    </script>
+</body>
+</html>

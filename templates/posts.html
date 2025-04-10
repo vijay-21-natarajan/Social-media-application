@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Posts</title>
+    <link rel="stylesheet" href="/static/styles/posts.css">
+</head>
+<body>
+    <header>
+        <div class="navbar">
+            <h1>SocialApp</h1>
+            <nav>
+                <a href="/">Home</a>
+                <a href="/explore">Explore</a>
+                <a href="/profile">Profile</a>
+                <a href="/messages">Messages</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="post-container">
+            {% for post in posts %}
+            <div class="post-card">
+                <div class="post-header">
+                    <img src="/static/uploads/{{ post.user.profile_picture }}" alt="{{ post.user.username }}'s profile picture" class="profile-pic">
+                    <span>{{ post.user.username }}</span>
+                </div>
+                <div class="post-image">
+                    {% if post.img %}
+                        {% if post.img.endswith('.mp4') %}
+                        <video controls>
+                            <source src="/static/uploads/{{ post.img }}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        {% else %}
+                        <img src="/static/uploads/{{ post.img }}" alt="Post image">
+                        {% endif %}
+                    {% endif %}
+                </div>                
+                <div class="post-details">
+                    <p>{{ post.desc }}</p>
+                    <div class="actions">
+                        <button class="like-button" onclick="likePost({ post_id })">❤ Like</button>
+                        <span>{{ post.likes.count() }} Likes</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </main>
+
+    <script>
+        function likePost(postId) {
+            fetch(`/likes`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ postId }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                location.reload();
+            })
+            .catch(err => console.error('Error liking post:', err));
+        }
+    </script>
+</body>
+</html>

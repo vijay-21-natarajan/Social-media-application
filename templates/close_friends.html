@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Close Friends</title>
+</head>
+<body>
+    <h1>Close Friends</h1>
+    <form id="closeFriendsForm">
+        <label>
+            Close Friends (comma-separated):
+            <textarea id="closeFriends">{{ ','.join(close_friends) }}</textarea>
+        </label>
+        <button type="submit">Save</button>
+    </form>
+</body>
+</html>

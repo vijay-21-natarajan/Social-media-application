@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Media Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            background: #007BFF;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .link {
+            text-align: center;
+            margin-top: 15px;
+        }
+        .link a {
+            color: #007BFF;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="loginForm">
+        <h2>Login</h2>
+        <form onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label for="loginUsername">Username</label>
+                <input type="text" id="loginUsername" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="loginPassword">Password</label>
+                <input type="password" id="loginPassword" name="password" required>
+            </div>
+            <button type="submit">Login</button>
+        </form>
+        <div class="link">
+            <a href="#" onclick="toggleForms()">Don't have an account? Sign up</a>
+        </div>
+    </div>
+
+    <div class="container" id="signupForm" style="display: none;">
+        <h2>Sign Up</h2>
+        <form onsubmit="handleSignup(event)">
+            <div class="form-group">
+                <label for="signupUsername">Username</label>
+                <input type="text" id="signupUsername" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="signupEmail">Email</label>
+                <input type="email" id="signupEmail" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="signupPassword">Password</label>
+                <input type="password" id="signupPassword" name="password" required>
+            </div>
+            <button type="submit">Sign Up</button>
+        </form>
+        <div class="link">
+            <a href="#" onclick="toggleForms()">Already have an account? Login</a>
+        </div>
+    </div>
+
+    <script>
+        const baseUrl = 'http://127.0.0.1:5000';
+    
+        function toggleForms() {
+            document.getElementById('loginForm').style.display =
+                document.getElementById('loginForm').style.display === 'none' ? 'block' : 'none';
+            document.getElementById('signupForm').style.display =
+                document.getElementById('signupForm').style.display === 'none' ? 'block' : 'none';
+        }
+    
+        async function handleLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+    
+            const response = await fetch(`${baseUrl}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+    
+            if (response.redirected) {
+                window.location.href = response.url; // Follow the redirect
+            } else {
+                const result = await response.json();
+                if (response.ok) {
+                    alert(result.message);
+                } else {
+                    alert(result.error);
+                }
+            }
+        }
+    
+        async function handleSignup(event) {
+            event.preventDefault();
+            const username = document.getElementById('signupUsername').value;
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+    
+            const response = await fetch(`${baseUrl}/signup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password })
+            });
+    
+            if (response.redirected) {
+                window.location.href = response.url; // Follow the redirect
+            } else {
+                const result = await response.json();
+                if (response.ok) {
+                    alert(result.message);
+                    toggleForms();
+                } else {
+                    alert(result.error);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

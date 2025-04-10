@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advertising Preferences</title>
+    <style>
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: #fafafa;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 50px auto;
+            background: #fff;
+            padding: 20px;
+            border: 1px solid #dbdbdb;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 20px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #262626;
+        }
+
+        p {
+            font-size: 14px;
+            color: #8e8e8e;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #dbdbdb;
+        }
+
+        .toggle:last-of-type {
+            border-bottom: none;
+        }
+
+        .toggle label {
+            font-size: 16px;
+            font-weight: 600;
+            color: #262626;
+        }
+
+        .toggle input {
+            width: 20px;
+            height: 20px;
+        }
+
+        .button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            text-align: center;
+            background-color: #3897f0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            text-decoration: none;
+            transition: background-color 0.2s ease;
+        }
+
+        .button:hover {
+            background-color: #287bc1;
+        }
+
+        .success-message {
+            font-size: 14px;
+            color: #28a745;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .error-message {
+            font-size: 14px;
+            color: #dc3545;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Advertising Preferences</h1>
+        <p>Control how your data is used for advertisements and marketing.</p>
+
+        <form id="advertisingPreferencesForm">
+            <div class="toggle">
+                <label for="personalizedAds">Personalized Ads</label>
+                <input type="checkbox" id="personalizedAds" checked>
+            </div>
+            <div class="toggle">
+                <label for="thirdPartyData">Allow Third-Party Data Usage</label>
+                <input type="checkbox" id="thirdPartyData">
+            </div>
+            <div class="toggle">
+                <label for="emailMarketing">Email Marketing</label>
+                <input type="checkbox" id="emailMarketing" checked>
+            </div>
+            <button type="submit" class="button">Save Preferences</button>
+        </form>
+
+        <div id="message" class="success-message"></div>
+        <a href="/settings/3" class="button">Back to Settings</a>
+    </div>
+
+    <script>
+        document.getElementById('advertisingPreferencesForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = '';
+
+            const data = {
+                personalized_ads: document.getElementById('personalizedAds').checked,
+                third_party_data: document.getElementById('thirdPartyData').checked,
+                email_marketing: document.getElementById('emailMarketing').checked,
+            };
+
+            fetch('/settings/advertising_preferences', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            })
+                .then((response) => response.json())
+                .then((result) => {
+                    if (result.message) {
+                        messageDiv.textContent = result.message;
+                        messageDiv.className = 'success-message';
+                    } else {
+                        messageDiv.textContent = result.error;
+                        messageDiv.className = 'error-message';
+                    }
+                })
+                .catch((error) => {
+                    messageDiv.textContent = 'An error occurred. Please try again.';
+                    messageDiv.className = 'error-message';
+                    console.error('Error:', error);
+                });
+        });
+    </script>
+</body>
+</html>

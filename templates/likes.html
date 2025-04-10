@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Likes</title>
+    <link rel="stylesheet" href="/static/styles/likes.css">
+</head>
+<body>
+    <header>
+        <div class="navbar">
+            <h1>SocialApp</h1>
+            <nav>
+                <a href="/">Home</a>
+                <a href="/explore">Explore</a>
+                <a href="/profile">Profile</a>
+                <a href="/messages">Messages</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="likes-container">
+            <h2>People Who Liked This Post</h2>
+            <ul class="likes-list">
+                {% for like in likes %}
+                <li class="like-item">
+                    <img src="/static/uploads/{{ like.user.profile_picture }}" alt="{{ like.user.username }}'s profile picture" class="profile-pic">
+                    <span>{{ like.user.username }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </main>
+
+    <script>
+        // Optional: Add interactivity for likes if needed
+    </script>
+</body>
+</html>

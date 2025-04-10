@@ -1,0 +1,28 @@
+/* Reduce the size of the post container */
+.post-card {
+    width: 300px; /* Adjust the width as needed */
+    margin: 10px auto; /* Center the post and add spacing */
+    padding: 10px;
+    border: 1px solid #dbdbdb;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    font-size: 0.9rem; /* Reduce text size */
+}
+
+/* Reduce the size of the images */
+.post-image img {
+    max-width: 100%; /* Ensure the image fits within the container */
+    height: auto; /* Maintain aspect ratio */
+    border-radius: 5px;
+}
+
+/* Adjust the spacing between elements */
+.post-details {
+    margin-top: 10px;
+}
+
+.actions {
+    margin-top: 5px;
+    font-size: 0.8rem; /* Reduce font size for actions */
+}

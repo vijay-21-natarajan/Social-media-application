@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Experiment Settings</title>
+    <style>
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: #fafafa;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 50px auto;
+            background: #fff;
+            padding: 20px;
+            border: 1px solid #dbdbdb;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 20px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #262626;
+        }
+
+        p {
+            font-size: 14px;
+            color: #8e8e8e;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #dbdbdb;
+        }
+
+        .toggle:last-of-type {
+            border-bottom: none;
+        }
+
+        .toggle label {
+            font-size: 16px;
+            font-weight: 600;
+            color: #262626;
+        }
+
+        .toggle input {
+            width: 20px;
+            height: 20px;
+        }
+
+        .button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            text-align: center;
+            background-color: #3897f0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.2s ease;
+            margin-top: 20px;
+        }
+
+        .button:hover {
+            background-color: #287bc1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Experiment Settings</h1>
+        <p>Opt in or out of experimental features and beta tests.</p>
+
+        <form id="experimentSettingsForm">
+            <div class="toggle">
+                <label for="featureA">Enable Feature A</label>
+                <input type="checkbox" id="featureA" checked>
+            </div>
+            <div class="toggle">
+                <label for="featureB">Enable Feature B</label>
+                <input type="checkbox" id="featureB">
+            </div>
+            <div class="toggle">
+                <label for="featureC">Enable Feature C</label>
+                <input type="checkbox" id="featureC" checked>
+            </div>
+            <button type="submit" class="button">Save Changes</button>
+        </form>
+
+        <a href="/settings/3" class="button">Back to Settings</a>
+    </div>
+
+    <script>
+        document.getElementById('experimentSettingsForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const data = {
+                featureA: document.getElementById('featureA').checked,
+                featureB: document.getElementById('featureB').checked,
+                featureC: document.getElementById('featureC').checked,
+            };
+
+            fetch('/settings/experiment-settings', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            })
+                .then((response) => response.json())
+                .then((result) => {
+                    alert(result.message || 'Settings saved successfully!');
+                })
+                .catch((error) => {
+                    console.error('Error saving settings:', error);
+                    alert('An error occurred. Please try again.');
+                });
+        });
+    </script>
+</body>
+</html>

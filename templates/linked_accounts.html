@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linked Accounts</title>
+    <style>
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: #fafafa;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 50px auto;
+            background: #fff;
+            padding: 20px;
+            border: 1px solid #dbdbdb;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 20px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #262626;
+        }
+
+        p {
+            font-size: 14px;
+            color: #8e8e8e;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .account {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #dbdbdb;
+        }
+
+        .account:last-of-type {
+            border-bottom: none;
+        }
+
+        .account span {
+            font-size: 16px;
+            font-weight: 600;
+            color: #262626;
+        }
+
+        .account button {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            background-color: #3897f0;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .account button.unlink {
+            background-color: #dc3545;
+        }
+
+        .account button:hover {
+            opacity: 0.9;
+        }
+
+        .button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            text-align: center;
+            background-color: #3897f0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            text-decoration: none;
+            transition: background-color 0.2s ease;
+        }
+
+        .button:hover {
+            background-color: #287bc1;
+        }
+
+        .success-message {
+            font-size: 14px;
+            color: #28a745;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .error-message {
+            font-size: 14px;
+            color: #dc3545;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Linked Accounts</h1>
+        <p>Connect and manage your accounts linked to this platform.</p>
+
+        <div id="accountsList">
+            <!-- Accounts will be dynamically loaded here -->
+        </div>
+
+        <div id="message" class="success-message"></div>
+        <a href="/settings/3" class="button">Back to Settings</a>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const accountsList = document.getElementById('accountsList');
+            const messageDiv = document.getElementById('message');
+
+            try {
+                // Fetch linked accounts
+                const response = await fetch('/api/linked-accounts');
+                const accounts = await response.json();
+
+                accounts.forEach(account => {
+                    const accountDiv = document.createElement('div');
+                    accountDiv.className = 'account';
+                    accountDiv.innerHTML = `
+                        <span>${account.platform}</span>
+                        <button class="${account.linked ? 'unlink' : ''}" data-platform="${account.platform}">
+                            ${account.linked ? 'Unlink' : 'Link'}
+                        </button>
+                    `;
+                    accountsList.appendChild(accountDiv);
+                });
+
+                // Add event listeners for buttons
+                accountsList.addEventListener('click', async (e) => {
+                    if (e.target.tagName === 'BUTTON') {
+                        const platform = e.target.getAttribute('data-platform');
+                        const action = e.target.classList.contains('unlink') ? 'unlink' : 'link';
+
+                        try {
+                            const result = await fetch(`/api/linked-accounts/${platform}`, {
+                                method: action === 'link' ? 'POST' : 'DELETE',
+                            });
+
+                            const data = await result.json();
+                            if (data.message) {
+                                messageDiv.textContent = data.message;
+                                messageDiv.className = 'success-message';
+                                e.target.textContent = action === 'link' ? 'Unlink' : 'Link';
+                                e.target.classList.toggle('unlink');
+                            } else {
+                                throw new Error(data.error);
+                            }
+                        } catch (err) {
+                            messageDiv.textContent = 'An error occurred. Please try again.';
+                            messageDiv.className = 'error-message';
+                            console.error(err);
+                        }
+                    }
+                });
+            } catch (error) {
+                messageDiv.textContent = 'Error loading linked accounts. Please try again.';
+                messageDiv.className = 'error-message';
+                console.error(error);
+            }
+        });
+    </script>
+</body>
+</html>

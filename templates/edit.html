@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #fafafa;
+            color: #262626;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: #ffffff;
+            border: 1px solid #dbdbdb;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            padding: 20px 40px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .container h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #262626;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #333333;
+        }
+
+        input[type="text"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #dbdbdb;
+            border-radius: 6px;
+            background-color: #fafafa;
+            font-size: 0.9rem;
+            color: #262626;
+        }
+
+        input[type="file"] {
+            font-size: 0.9rem;
+        }
+
+        textarea {
+            resize: none;
+        }
+
+        .form-group.toggle-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .form-group.toggle-container label {
+            margin-left: 10px;
+            font-size: 0.9rem;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        button {
+            background-color: #0095f6;
+            color: #ffffff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #007ac1;
+        }
+
+        .btn-cancel {
+            background-color: transparent;
+            color: #0095f6;
+            border: none;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .btn-cancel:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Edit Profile</h2>
+        <form id="editProfileForm" action="/profile/edit/{{ user_id }}" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="name">Name</label>
+                <input type="text" id="website" name="website" placeholder="Add your name here">
+            </div>
+            <div class="form-group">
+                <label for="bio">Bio</label>
+                <textarea id="bio" name="bio" rows="4" placeholder="Tell us about yourself"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="gender">Gender</label>
+                <select id="gender" name="gender">
+                    <option value="prefer_not_to_say">Prefer not to say</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div class="form-group toggle-container">
+                <input type="checkbox" id="showSuggestions" name="showSuggestions">
+                <label for="showSuggestions">Show account suggestions on profiles</label>
+            </div>
+            <div class="form-group">
+                <label for="profilePicture">Profile Picture</label>
+                <input type="file" id="profilePicture" name="profile_picture">
+            </div>
+            <div class="actions">
+                <button type="submit">Save Changes</button>
+                <button type="button" class="btn-cancel" onclick="window.location.href='/homepage'">Cancel</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Settings</title>
+    <style>
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: #fafafa;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 50px auto;
+            background: #fff;
+            padding: 20px;
+            border: 1px solid #dbdbdb;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 20px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #262626;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #262626;
+            margin-bottom: 8px;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #dbdbdb;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            background-color: #fff;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        select:focus {
+            border-color: #3897f0;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            background-color: #3897f0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        button:hover {
+            background-color: #287bc1;
+        }
+
+        .success-message {
+            font-size: 14px;
+            color: #28a745;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .error-message {
+            font-size: 14px;
+            color: #dc3545;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Content Settings</h1>
+        <form id="contentForm">
+            <label for="contentVisibility">Content Visibility</label>
+            <select id="contentVisibility">
+                <option value="public">Public</option>
+                <option value="friends_only">Friends Only</option>
+                <option value="private">Private</option>
+            </select>
+
+            <button type="submit">Save Changes</button>
+        </form>
+        <div id="message" class="success-message"></div>
+    </div>
+
+    <script>
+        const userId = { user_id };
+        document.getElementById('contentForm').addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = "";
+
+            const contentVisibility = document.getElementById('contentVisibility').value;
+
+            fetch(`/settings/content`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content_visibility: contentVisibility })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    messageDiv.textContent = data.message;
+                    messageDiv.className = "success-message";
+                } else if (data.error) {
+                    messageDiv.textContent = data.error;
+                    messageDiv.className = "error-message";
+                }
+            })
+            .catch(error => {
+                messageDiv.textContent = "An error occurred. Please try again.";
+                messageDiv.className = "error-message";
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>
