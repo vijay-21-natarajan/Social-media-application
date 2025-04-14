@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Media App</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: #fafafa;
+            color: #262626;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 18%;
+            height: 100vh;
+            background-color: #ffffff;
+            position: fixed;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+            border-right: 1px solid #dbdbdb;
+        }
+
+        .sidebar a {
+            color: #262626;
+            text-decoration: none;
+            margin: 15px 0;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar a:hover {
+            color: #3897f0;
+        }
+
+        .sidebar .logo {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #3897f0;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 18%;
+            width: 58%;
+            padding: 15px;
+            min-height: 100vh;
+            overflow-y: auto;
+        }
+
+        .main-content .post {
+            background-color: #ffffff;
+            padding: 10px;
+            border: 1px solid #dbdbdb;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .main-content .post:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .post h3 {
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+
+        .post p {
+            margin: 4px 0;
+            font-size: 0.8rem;
+            color: #555;
+        }
+
+        .post .post-image img {
+            max-width: 100%;
+            height: 500px;
+            object-fit: cover;
+            border-radius: 5px;
+            margin-top: 5px;
+        }
+
+        /* Right Sidebar */
+        .right-sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 24%;
+            height: 100vh;
+            background-color: #ffffff;
+            padding: 15px;
+            border-left: 1px solid #dbdbdb;
+        }
+
+        .right-sidebar h3 {
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+
+        .right-sidebar .card {
+            background-color: #f7f7f7;
+            border-radius: 8px;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+
+        .right-sidebar .card p {
+            font-size: 0.8rem;
+            margin: 0;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: #cccccc;
+            border-radius: 8px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: #aaaaaa;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">SOC</div>
+        <a href="#"><i class="fas fa-home"></i> Home</a>
+        <a href="/explore"><i class="fas fa-search"></i> Explore</a>
+        <a href="/settings/3"><i class="fas fa-cog"></i> Settings</a>
+        <a href="/messages"><i class="fas fa-envelope"></i> Messages</a>
+        <a href="/profile/12"><i class="fas fa-user"></i> Profile</a>
+        <a href="/upload-content"><i class="fas fa-plus-square"></i>Create</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="posts-container">
+        <!-- Posts will be dynamically inserted here -->
+    </div>
+
+    <!-- Right Sidebar -->
+    <div class="right-sidebar">
+        <h3>What’s happening</h3>
+        <div id="trending-container">
+            <!-- Trending topics will be dynamically inserted here -->
+        </div>
+        <h3 style="margin-top: 20px;">People You May Know</h3>
+        <div id="suggestions-container">
+            <!-- Mutual suggestions will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <script>
+        async function fetchContent() {
+    try {
+        const postsContainer = document.getElementById('posts-container');
+
+        const response = await fetch('/api/all-content');
+        const content = await response.json();
+
+        content.forEach(item => {
+            const postElement = document.createElement('div');
+            postElement.className = 'post';
+            postElement.setAttribute('data-id', item.id); // Store the ID for deletion
+
+            postElement.innerHTML = `
+                <h3>${item.description || 'No description'}</h3>
+                <div class="post-image">
+                    ${
+                        item.file_path
+                            ? `<img src="${item.file_path}" alt="Post Content">`
+                            : `<a href="${item.url}" target="_blank">View Content</a>`
+                    }
+                </div>
+                <button onclick="deletePost(${item.id}, this)" style="margin-top: 10px; padding: 5px 10px; background-color: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer;">Delete</button>
+            `;
+
+            postsContainer.appendChild(postElement);
+        });
+    } catch (error) {
+        console.error('Error fetching content:', error);
+    }
+}
+
+        async function fetchTrendingTopics() {
+            try {
+                const response = await fetch('/api/trending');
+                const trendingTopics = await response.json();
+
+                const trendingContainer = document.getElementById('trending-container');
+                trendingContainer.innerHTML = '';
+
+                trendingTopics.forEach(topic => {
+                    const topicElement = `
+                        <div class="card">
+                            <p>${topic.name} - ${topic.postsCount} posts</p>
+                        </div>
+                    `;
+                    trendingContainer.innerHTML += topicElement;
+                });
+            } catch (error) {
+                console.error('Error fetching trending topics:', error);
+            }
+        }
+        async function deletePost(postId, button) {
+    if (!confirm('Are you sure you want to delete this post?')) return;
+
+    try {
+        const response = await fetch(`/api/delete-content/${postId}`, {
+            method: 'DELETE',
+        });
+
+        if (response.ok) {
+            const postElement = button.closest('.post');
+            postElement.remove(); // Remove post from DOM
+            console.log('Post deleted successfully.');
+        } else {
+            alert('Failed to delete post.');
+        }
+    } catch (error) {
+        console.error('Error deleting post:', error);
+        alert('An error occurred while deleting the post.');
+    }
+}
+async function fetchMutualSuggestions() {
+        try {
+            const response = await fetch('/api/mutual-suggestions');
+            if (!response.ok) throw new Error('Failed to fetch mutual suggestions');
+            const suggestions = await response.json();
+
+            const container = document.getElementById('suggestions-container');
+            container.innerHTML = '';
+
+            if (suggestions.length === 0) {
+                container.innerHTML = `<p style="font-size: 0.9rem;">No suggestions available</p>`;
+                return;
+            }
+
+            suggestions.forEach(user => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.style.display = 'flex';
+                card.style.alignItems = 'center';
+                card.style.gap = '10px';
+
+                card.innerHTML = `
+                    <img src="${user.profile_picture || '/static/default-profile.png'}" alt="Profile" 
+                         style="width: 35px; height: 35px; border-radius: 50%;">
+                    <div>
+                        <p style="margin: 0; font-weight: 500;">${user.username}</p>
+                        <p style="margin: 0; font-size: 0.75rem; color: gray;">
+                            ${user.mutual_count} mutual friend${user.mutual_count > 1 ? 's' : ''}
+                        </p>
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+
+        } catch (error) {
+            console.error('Error fetching mutual suggestions:', error);
+        }
+    }
+
+        // Fetch content on page load
+    window.addEventListener('DOMContentLoaded', () => {
+        fetchContent();
+        fetchTrendingTopics();
+        deletePost();
+        fetchMutualSuggestions(); // ✅ Call it on load
+    });
+    </script>
+</body>
+</html>

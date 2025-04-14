@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Content</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #fafafa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .upload-container {
+            background: white;
+            width: 90%;
+            max-width: 500px;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .upload-container h1 {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .upload-container textarea,
+        .upload-container input[type="file"],
+        .upload-container input[type="url"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .upload-container button {
+            width: 100%;
+            padding: 12px;
+            background-color: #3897f0;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .upload-container button:hover {
+            background-color: #3185d6;
+        }
+
+        .upload-container .icon {
+            font-size: 3rem;
+            color: #ccc;
+            margin-bottom: 10px;
+        }
+
+        .upload-container label {
+            font-size: 0.9rem;
+            color: #666;
+            display: block;
+            margin-top: 10px;
+            text-align: left;
+        }
+
+        .upload-container .or {
+            margin: 20px 0;
+            font-size: 0.9rem;
+            color: #999;
+            position: relative;
+        }
+
+        .upload-container .or::before,
+        .upload-container .or::after {
+            content: '';
+            display: block;
+            width: 40%;
+            height: 1px;
+            background: #ddd;
+            position: absolute;
+            top: 50%;
+        }
+
+        .upload-container .or::before {
+            left: 0;
+        }
+
+        .upload-container .or::after {
+            right: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="upload-container">
+    <h1>Create Content</h1>
+    <form id="uploadForm" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="user_id" value="1"> <!-- Replace with dynamic user ID -->
+        <label for="description">Description:</label><br>
+        <textarea name="description" id="description" rows="4" cols="50"></textarea><br><br>
+        <label for="file">Upload File:</label><br>
+        <input type="file" name="file" id="file"><br><br>
+        <label for="url">Or Enter URL:</label><br>
+        <input type="url" name="url" id="url" placeholder="https://example.com"><br><br>
+        <button type="submit">Upload</button>
+    </form>
+    </div>
+    <script>
+        document.getElementById('uploadForm').onsubmit = async function (e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const response = await fetch('/upload-content', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            alert(result.message || result.error);
+        };
+    </script>
+</body>
+</html>
