@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, render_template, redirect, url_for, session,flash
-#from flask_socketio import SocketIO, send, emit, join_room, leave_room
+from flask_socketio import SocketIO, send, emit, join_room
 from flask_sqlalchemy import SQLAlchemy
-#from flask_migrate import Migrate
+from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 import smtplib
 from email.mime.text import MIMEText
@@ -32,8 +32,11 @@ openai.api_key = "sk-proj-wIbUW1UFRWGEIIW90SLtfwaBWSzUmWBcGbdzkCv_VKfN-qm9KurnNa
 
 db = SQLAlchemy(app)
 #migrate = Migrate(app, db)
-#socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 # Define the User model
+
+active_users={}
+
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -79,7 +82,9 @@ class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     recipient_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    text = db.Column(db.Text, nullable=False)
+    text = db.Column(db.Text, nullable=False) 
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)  # Added timestamp
+
 
     def to_dict(self):
         return {
@@ -87,6 +92,7 @@ class Message(db.Model):
             "sender_id": self.sender_id,
             "recipient_id": self.recipient_id,
             "text": self.text,
+            "timestamp": self.timestamp.isoformat(),
             "sender": self.sender.username if self.sender else None,
             "recipient": self.recipient.username if self.recipient else None
         }
@@ -96,6 +102,25 @@ class Content(db.Model):
     file_path = db.Column(db.String(300), nullable=True)
     url = db.Column(db.String(300), nullable=True)
     description = db.Column(db.String(500), nullable=True)
+
+class FollowRequest(db.Model):
+    __tablename__ = 'follow_requests'
+    id = db.Column(db.Integer, primary_key=True)
+    from_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    to_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    status = db.Column(db.String(20), default="Pending")  # "Pending", "Accepted", "Rejected"
+
+    from_user = db.relationship('User', foreign_keys=[from_user_id])
+    to_user = db.relationship('User', foreign_keys=[to_user_id])
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "from_user": self.from_user.username,
+            "to_user": self.to_user.username,
+            "status": self.status
+        }
+
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
@@ -552,12 +577,12 @@ def search_users():
 
 @app.route('/users', methods=['GET'])
 def get_users():
-    query = request.args.get('username', '').strip()
-    if query:
-        users = User.query.filter(User.username.ilike(f'%{query}%')).all()
-    else:
-        users = User.query.all()
-    return jsonify([{"id": user.id, "username": user.username} for user in users])
+    current_user = request.args.get('current_user', '').strip()
+    users = User.query.all()
+    return jsonify([
+        {"id": user.id, "username": user.username}
+        for user in users if user.username != current_user
+    ])
 
 @app.route('/current-user', methods=['GET'])
 def get_current_user():
@@ -601,6 +626,84 @@ def messages(recipient_id):
         "timestamp": msg.timestamp.isoformat()
     } for msg in messages])
 
+@socketio.on('join')
+def on_join(data):
+    print(f"Debug: Received data: {data}")
+    if not isinstance(data, dict):
+        print("Data is not a dictionary!")
+    elif 'user_id' not in data:
+        print("Missing 'user_id' in data")
+    else:
+        user_id = data['user_id']
+        join_room(user_id)
+        print(f"{user_id} joined their room")
+
+@socketio.on('private_message')
+def handle_private_message(data):
+    sender = request.sid
+    recipient_username = data['to']
+    message = data['message']
+
+    # Find the recipient's sid
+    recipient_sid = None
+    for sid, user in active_users.items():
+        if user.get('username') == recipient_username:
+            recipient_sid = sid
+            break
+
+    if recipient_sid:
+        # Send message to recipient
+        emit('private_message', {'from': active_users[sender]['username'], 'message': message}, to=recipient_sid)
+
+    # Optionally, acknowledge sender
+    emit('private_message', {'from': 'You', 'message': message}, to=sender)  
+
+# Handle user registration and associate it with session ID
+@socketio.on('register_user')
+def handle_register_user(data):
+    username = data.get('username')
+    if username:
+        active_users[username] = request.sid
+        print(f"{username} registered with SID: {request.sid}")
+
+# Handle message sending
+@socketio.on('send_message')
+def handle_send_message(data):
+    sender = data.get('sender')
+    recipient = data.get('recipient')
+    message = data.get('message')
+
+    if sender and recipient and message:
+        # Deliver message to the recipient if they are active
+        recipient_sid = active_users.get(recipient)
+        if recipient_sid:
+            emit('receive_message', {'sender': sender, 'message': message}, room=recipient_sid)
+        # Notify the sender that the message was sent
+        emit('receive_message', {'sender': sender, 'message': message}, room=request.sid)
+
+@app.route('/chat-history/<recipient_username>', methods=['GET'])
+def chat_history(recipient_username):
+    current_user_id = session.get('user_id')
+    if not current_user_id:
+        return jsonify({"error": "User not logged in"}), 401
+
+    current_user = User.query.get(current_user_id)
+    recipient_user = User.query.filter_by(username=recipient_username).first()
+
+    if not recipient_user:
+        return jsonify({"error": "Recipient not found"}), 404
+
+    # Fetch messages between the two users
+    messages = Message.query.filter(
+        ((Message.sender_id == current_user.id) & (Message.recipient_id == recipient_user.id)) |
+        ((Message.sender_id == recipient_user.id) & (Message.recipient_id == current_user.id))
+    ).order_by(Message.id).all()
+
+    return jsonify([{
+        "sender": msg.sender.username,
+        "recipient": msg.recipient.username,
+        "text": msg.text
+    } for msg in messages])
 
 @app.route('/messages/', methods=['GET', 'POST'])
 def new():
@@ -700,90 +803,69 @@ def delete_content(post_id):
     else:
         return jsonify({'error': 'Post not found'}), 404
 
-@app.route('/api/mutual-suggestions', methods=['GET'])
-def mutual_suggestions():
+@app.route('/profile/<username>', methods=['GET'])
+def user_profile(username):
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return "User not found", 404
+    return render_template('profile.html', user=user)
+
+@app.route('/send_follow_request', methods=['POST'])
+def send_follow_request():
+    data = request.json
+    from_user_id = session.get('user_id')  # Get the logged-in user
+    to_username = data.get('to_user')
+
+    if not from_user_id:
+        return jsonify({"error": "User not logged in"}), 401
+
+    to_user = User.query.filter_by(username=to_username).first()
+    if not to_user:
+        return jsonify({"error": "User not found"}), 404
+
+    if from_user_id == to_user.id:
+        return jsonify({"error": "You cannot follow yourself"}), 400
+
+    existing_request = FollowRequest.query.filter_by(from_user_id=from_user_id, to_user_id=to_user.id).first()
+    if existing_request:
+        return jsonify({"error": "Follow request already sent"}), 400
+
+    follow_request = FollowRequest(from_user_id=from_user_id, to_user_id=to_user.id)
+    db.session.add(follow_request)
+    db.session.commit()
+    return jsonify({"message": "Follow request sent"}), 201
+
+
+@app.route('/view_follow_requests', methods=['GET'])
+def view_follow_requests():
     user_id = session.get('user_id')
     if not user_id:
         return jsonify({"error": "User not logged in"}), 401
 
-    # Check if database is empty (no users other than current user)
-    total_users = User.query.count()
-    if total_users <= 1:
-        try:
-            sample_users = [
-                User(
-                    username='alice',
-                    email='alice@example.com',
-                    password=generate_password_hash('pass123'),
-                    close_friends='bob,carol',
-                    profile_picture='static/uploads/default_profile.png'
-                ),
-                User(
-                    username='bob',
-                    email='bob@example.com',
-                    password=generate_password_hash('pass123'),
-                    close_friends='alice,carol,dave',
-                    profile_picture='static/uploads/default_profile.png'
-                ),
-                User(
-                    username='carol',
-                    email='carol@example.com',
-                    password=generate_password_hash('pass123'),
-                    close_friends='alice,bob',
-                    profile_picture='static/uploads/default_profile.png'
-                ),
-                User(
-                    username='dave',
-                    email='dave@example.com',
-                    password=generate_password_hash('pass123'),
-                    close_friends='bob',
-                    profile_picture='static/uploads/default_profile.png'
-                ),
-                User(
-                    username='eve',
-                    email='eve@example.com',
-                    password=generate_password_hash('pass123'),
-                    close_friends='carol',
-                    profile_picture='static/uploads/default_profile.png'
-                ),
-            ]
+    requests = FollowRequest.query.filter_by(to_user_id=user_id, status="Pending").all()
+    return jsonify([req.to_dict() for req in requests])
 
-            db.session.bulk_save_objects(sample_users)
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({"error": f"Failed to seed users: {str(e)}"}), 500
 
-    current_user = User.query.get(user_id)
-    if not current_user:
-        return jsonify({"error": "User not found"}), 404
+@app.route('/respond_to_request', methods=['POST'])
+def respond_to_request():
+    data = request.json
+    request_id = data.get('request_id')
+    action = data.get('action')  # "Accept" or "Reject"
 
-    current_user_friends = set(current_user.close_friends.split(',')) if current_user.close_friends else set()
+    follow_request = FollowRequest.query.get(request_id)
+    if not follow_request:
+        return jsonify({"error": "Follow request not found"}), 404
 
-    suggestions = []
+    if session.get('user_id') != follow_request.to_user_id:
+        return jsonify({"error": "Unauthorized action"}), 403
 
-    all_users = User.query.filter(User.id != user_id).all()
-    for user in all_users:
-        other_user_friends = set(user.close_friends.split(',')) if user.close_friends else set()
-        mutuals = current_user_friends & other_user_friends
-
-        if mutuals:
-            suggestions.append({
-                "id": user.id,
-                "username": user.username,
-                "mutual_count": len(mutuals),
-                "mutual_friends": list(mutuals),
-                "profile_picture": user.profile_picture
-            })
-
-    # Sort by number of mutual friends (descending)
-    suggestions.sort(key=lambda x: x["mutual_count"], reverse=True)
-
-    return jsonify(suggestions)
+    follow_request.status = "Accepted" if action == "Accept" else "Rejected"
+    db.session.commit()
+    return jsonify({"message": f"Follow request {action.lower()}ed"}), 200
 
 
 if __name__ == '__main__':
     # Set your SendGrid API key as an environment variable
     os.environ['SENDGRID_API_KEY'] = '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'  # Replace with your actual API key
-    #socketio.run(app, debug=True)
-    app.run(debug=True)
+    socketio.run(app, debug=True)
+    #app.run(debug=True)
